@@ -31,6 +31,9 @@ $rules = [
     'No se puede trepar por las redes ni colocar decoraciones en las paredes.',
     'Los niños alérgicos deberán ser supervisados durante la merienda.',
 ];
+
+$galleryPhotos = glob(__DIR__ . '/imagenes/fotos/*.{jpg,jpeg,png,webp}', GLOB_BRACE) ?: [];
+sort($galleryPhotos, SORT_NATURAL | SORT_FLAG_CASE);
 ?>
 <!doctype html>
 <html lang="es">
@@ -48,8 +51,7 @@ $rules = [
     <header class="site-header">
         <div class="topbar">
             <a class="brand" href="#inicio" aria-label="Parque Infantil Kangaroos, inicio">
-                <span class="brand-mark">✦</span>
-                <span><strong>Kangaroos</strong><small>PARQUE INFANTIL</small></span>
+                <img class="brand-logo" src="imagenes/logo/logo-kangaroos-modern.png" alt="Kangaroos Parque Infantil">
             </a>
             <nav class="main-nav" aria-label="Navegación principal">
                 <a href="#inicio">Inicio</a>
@@ -119,6 +121,28 @@ $rules = [
             <div class="gallery-photo photo-three"></div>
         </section>
 
+        <?php if ($galleryPhotos): ?>
+            <section class="photo-carousel section-pad" id="galeria" aria-labelledby="galeria-titulo">
+                <div class="section-heading centered">
+                    <p class="eyebrow coral">Conoce Kangaroos</p>
+                    <h2 id="galeria-titulo">Un parque para<br><span>disfrutar en familia.</span></h2>
+                    <p>Descubre nuestros espacios, celebraciones y momentos especiales.</p>
+                </div>
+                <div class="carousel" data-carousel>
+                    <div class="carousel-stage" aria-live="polite">
+                        <?php foreach ($galleryPhotos as $index => $photo): ?>
+                            <figure class="carousel-slide<?= $index === 0 ? ' is-active' : '' ?>"<?= $index === 0 ? '' : ' hidden' ?>>
+                                <img src="imagenes/fotos/<?= htmlspecialchars(basename($photo), ENT_QUOTES, 'UTF-8') ?>" alt="Fotografía de Kangaroos <?= $index + 1 ?>"<?= $index === 0 ? '' : ' loading="lazy"' ?>>
+                            </figure>
+                        <?php endforeach; ?>
+                    </div>
+                    <button class="carousel-control carousel-prev" type="button" aria-label="Fotografía anterior">←</button>
+                    <button class="carousel-control carousel-next" type="button" aria-label="Fotografía siguiente">→</button>
+                    <div class="carousel-counter" aria-label="Contador de fotografías"><span class="carousel-current">1</span> / <?= count($galleryPhotos) ?></div>
+                </div>
+            </section>
+        <?php endif; ?>
+
         <section class="rules section-pad" id="normas">
             <div class="rules-photo"></div>
             <div class="rules-copy">
@@ -150,9 +174,44 @@ $rules = [
     </main>
 
     <footer class="site-footer">
-        <a class="brand footer-brand" href="#inicio"><span class="brand-mark">✦</span><span><strong>Kangaroos</strong><small>PARQUE INFANTIL</small></span></a>
+        <a class="brand footer-brand" href="#inicio"><img class="brand-logo" src="imagenes/logo/logo-kangaroos-modern.png" alt="Kangaroos Parque Infantil"></a>
         <p>Lunes a viernes: 17:00 a 20:30 · Sábado y domingo: 11:00 a 20:30</p>
         <p>© <?= date('Y') ?> Parque Infantil Kangaroos</p>
     </footer>
+    <script>
+        (() => {
+            const carousel = document.querySelector('[data-carousel]');
+            if (!carousel) return;
+
+            const slides = [...carousel.querySelectorAll('.carousel-slide')];
+            const currentCounter = carousel.querySelector('.carousel-current');
+            let currentSlide = 0;
+            let autoPlay;
+
+            const showSlide = (slideIndex) => {
+                currentSlide = (slideIndex + slides.length) % slides.length;
+                slides.forEach((slide, index) => {
+                    const isCurrent = index === currentSlide;
+                    slide.hidden = !isCurrent;
+                    slide.classList.toggle('is-active', isCurrent);
+                });
+                currentCounter.textContent = currentSlide + 1;
+            };
+
+            const startAutoPlay = () => {
+                clearInterval(autoPlay);
+                autoPlay = window.setInterval(() => showSlide(currentSlide + 1), 5000);
+            };
+
+            carousel.querySelector('.carousel-prev').addEventListener('click', () => { showSlide(currentSlide - 1); startAutoPlay(); });
+            carousel.querySelector('.carousel-next').addEventListener('click', () => { showSlide(currentSlide + 1); startAutoPlay(); });
+            carousel.addEventListener('mouseenter', () => clearInterval(autoPlay));
+            carousel.addEventListener('mouseleave', startAutoPlay);
+            carousel.addEventListener('focusin', () => clearInterval(autoPlay));
+            carousel.addEventListener('focusout', startAutoPlay);
+
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) startAutoPlay();
+        })();
+    </script>
 </body>
 </html>
